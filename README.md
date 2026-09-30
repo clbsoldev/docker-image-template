@@ -23,6 +23,22 @@ Template repo for `clbsoldev` Docker images: build → content digest comparison
    `short-description` to the `dockerhub-description` step in `build.yml`
    (that's project-specific text and can't be derived generically).
 
+## How `build.yml` behaves
+
+- **Image name**: derived automatically from the repo name, with a leading
+  `docker-` prefix stripped if present (matches the `docker-<name>` repo
+  naming convention, e.g. repo `docker-syslog-logdy-server` → image
+  `ghcr.io/clbsoldev/syslog-logdy-server`). No workflow edit needed per repo.
+- **Publish gate**: the `check` job hashes the built OCI tarball and compares
+  it against `digest.txt` from the last run. Only if the content actually
+  changed does `publish` run — so a weekly cron rebuild with no real change
+  (e.g. base image unchanged) doesn't spam a new `:latest` push.
+- **Docker Hub is off by default.** To enable it on a given repo: set the
+  repo variable `ENABLE_DOCKERHUB=true` (Settings → Secrets and variables →
+  Actions → Variables), and add `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN` as
+  secrets. Without the variable, both Docker Hub steps are skipped entirely
+  — GHCR publishing always happens regardless of this toggle.
+
 ## Labels
 
 `.github/labels.yml` is automatically synced to the repo on every push that
