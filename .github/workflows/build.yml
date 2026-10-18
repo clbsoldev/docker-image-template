@@ -109,16 +109,22 @@ jobs:
             --multi-arch all \
             --dest-creds "${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" \
             oci-archive:image.tar \
-            docker://docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ steps.meta.outputs.image_name }}:latest
+            docker://docker.io/${{ vars.DOCKERHUB_NAMESPACE }}/${{ steps.meta.outputs.image_name }}:latest
 
       - name: Sync README to Docker Hub
         if: vars.ENABLE_DOCKERHUB == 'true'
+        # Docker Hub's description-update API does not accept access tokens
+        # (confirmed Docker Hub limitation, not a scope issue) - only real
+        # account passwords work, which we don't want to store as a secret.
+        # continue-on-error so this cosmetic step never fails the actual
+        # image push, which is what matters.
+        continue-on-error: true
         uses: peter-evans/dockerhub-description@v5
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ secrets.DOCKERHUB_USERNAME }}/${{ steps.meta.outputs.image_name }}
-          readme-filepath: ./Readme.md
+          repository: ${{ vars.DOCKERHUB_NAMESPACE }}/${{ steps.meta.outputs.image_name }}
+          readme-filepath: ./README.md
 
       - name: Commit updated digest
         run: |
